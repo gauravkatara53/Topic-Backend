@@ -6,6 +6,7 @@ import {
   logoutUser,
   refreshAccessToken,
   registerUser,
+  saveToken,
   updateAccountDetailsController,
   updateUserAvatar,
 } from "../controllers/authController.js";
@@ -42,5 +43,8 @@ router.patch(
   updateUserAvatar
 );
 router.route("/getUser").get(verifyJWT, getUser);
+
+//save token
+router.route("/save-token").post(saveToken);
 
 export default router;

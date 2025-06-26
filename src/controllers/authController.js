@@ -172,7 +172,6 @@ export const googleLoginSuccess = async (req, res) => {
     user._id
   );
 
-  // Cookie Options
   const options = {
     httpOnly: true,
     secure: true,
@@ -198,3 +197,23 @@ export const googleLoginSuccess = async (req, res) => {
     )}`
   );
 };
+
+// save google oauth
+
+export const saveToken = asyncHandler(async (req, res) => {
+  const { token } = req.body;
+
+  if (!token) {
+    return res.status(400).json({ success: false, message: "Token missing" });
+  }
+
+  res.cookie("accessToken", token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "None",
+    path: "/",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  res.status(200).json({ success: true });
+});
