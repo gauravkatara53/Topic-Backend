@@ -202,10 +202,13 @@ export const googleLoginSuccess = async (req, res) => {
 
 export const saveToken = asyncHandler(async (req, res) => {
   const { token } = req.body;
-
+  console.log("----------------------------------------");
   if (!token) {
     return res.status(400).json({ success: false, message: "Token missing" });
   }
+  console.log("----------------------------------------");
+  console.log(token);
+  console.log("----------------------------------------");
 
   res.cookie("accessToken", token, {
     httpOnly: true,
