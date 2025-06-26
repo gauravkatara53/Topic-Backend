@@ -15,6 +15,9 @@ import { getCache, setCache } from "../utils/nodeCache.js";
 import { deleteCache } from "../utils/nodeCache.js";
 import dotenv from "dotenv";
 dotenv.config();
+import { OAuth2Client } from "google-auth-library";
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export const registerUser = async (req, res, next) => {
   try {
@@ -204,7 +207,9 @@ export const saveToken = asyncHandler(async (req, res) => {
   const { token } = req.body;
   console.log("----------------------------------------");
   if (!token) {
-    return res.status(400).json({ success: false, message: "Token missing" });
+    return res
+      .status(400)
+      .json({ success: false, message: "Token missing google auth " });
   }
   console.log("----------------------------------------");
   console.log(token);
@@ -220,3 +225,55 @@ export const saveToken = asyncHandler(async (req, res) => {
 
   res.status(200).json({ success: true });
 });
+
+export const verifyGoogleToken = async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { email, name, picture } = payload;
+
+    // Check if user exists, else create
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = await User.create({ name, email, profilePic: picture });
+    }
+
+    user.isLoggedIn = true;
+    await user.save();
+
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+      user._id
+    );
+
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    const safeUser = await User.findById(user._id).select(
+      "-password -refreshToken"
+    );
+    res.status(200).json({ user: safeUser });
+  } catch (err) {
+    res.status(401).json({
+      success: false,
+      message: "Invalid Google token",
+      error: err.message,
+    });
+  }
+};

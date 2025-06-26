@@ -9,6 +9,7 @@ import {
   saveToken,
   updateAccountDetailsController,
   updateUserAvatar,
+  verifyGoogleToken,
 } from "../controllers/authController.js";
 import { verifyJWT } from "../middlewares/authMiddleware.js";
 import { upload } from "../middlewares/multer.js";
@@ -46,5 +47,9 @@ router.route("/getUser").get(verifyJWT, getUser);
 
 //save token
 router.route("/save-token").post(saveToken);
+// google
+// routes/auth.js
+
+router.route("/google/verify").post(verifyGoogleToken);
 
 export default router;
