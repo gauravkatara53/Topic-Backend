@@ -7,7 +7,7 @@ import {
   getNotes,
   notesUpload,
 } from "../controllers/notesController.js";
-import { checkRoleAndVerification } from "../middlewares/checkuploader.js";
+// import { checkRoleAndVerification } from "../middlewares/checkuploader.js";
 
 const router = Router();
 

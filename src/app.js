@@ -5,7 +5,7 @@ import cookieParser from "cookie-parser";
 import session from "express-session";
 import passport from "passport";
 import "./config/passport.js"; // Load passport config
-
+import "./cron/reservationCleanup.js";
 // Initialize express application
 const app = express();
 
@@ -89,6 +89,7 @@ import notesRouter from "./routes/noteRoutes.js";
 import pyqRouter from "./routes/PYQRoutes.js";
 import newRouter from "./routes/newRoutes.js";
 import globalSearchRouter from "./routes/searchRoutes.js";
+import buyAndSellRouter from "./routes/BUY&SELL/buyAndSellRoutes.js";
 // Route declarations for the app
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/otp", otpRouter);
@@ -97,5 +98,6 @@ app.use("/api/v1/notes", notesRouter);
 app.use("/api/v1/PYQ", pyqRouter);
 app.use("/api/v1/news", newRouter);
 app.use("/api/v1/global", globalSearchRouter);
+app.use("/api/v1/buyAndSell", buyAndSellRouter);
 // Export the configured express app
 export { app };

@@ -1,13 +1,18 @@
 import Otp from "../models/OTPModel.js";
 import User from "../models/userModel.js";
-import sendEmail from "../utils/sendEmail.js";
+import { sendEmail } from "../utils/sendEmail.js";
 import { sendResponse } from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { deleteCache } from "../utils/nodeCache.js";
 
+// const isNITJSREmail = (email) =>
+//   /^[a-zA-Z0-9._%+-]+@nitjsr\.ac\.in$/.test(email);
+// Add more domains as needed
 const isNITJSREmail = (email) =>
-  /^[a-zA-Z0-9._%+-]+@nitjsr\.ac\.in$/.test(email);
+  /^[a-zA-Z0-9._%+-]+@(nitjsr\.ac\.in|gmail\.com|outlook\.com|protonmail\.com)$/.test(
+    email
+  );
 
 // ✅ Send OTP
 export const sendOtp = asyncHandler(async (req, res) => {
