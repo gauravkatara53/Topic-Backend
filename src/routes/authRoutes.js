@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   getUser,
+  getUserById,
   googleLoginSuccess,
   loginUser,
   logoutUser,
@@ -44,6 +45,7 @@ router.patch(
   updateUserAvatar
 );
 router.route("/getUser").get(verifyJWT, getUser);
+router.route("/getUser/:id").get(verifyJWT, getUserById);
 
 //save token
 router.route("/save-token").post(saveToken);

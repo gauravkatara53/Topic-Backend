@@ -16,6 +16,15 @@ const deleteCache = (key) => {
   return cache.del(key);
 };
 
+export const deleteCacheByPrefix = (prefix) => {
+  const keys = cache.keys();
+  keys.forEach((key) => {
+    if (key.startsWith(prefix)) {
+      cache.del(key);
+    }
+  });
+};
+
 const flushCache = () => {
   return cache.flushAll();
 };

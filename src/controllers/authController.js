@@ -72,9 +72,8 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
     throw new Error("Refresh token is required");
   }
 
-  const { accessToken, newRefreshToken } = await refreshAccessTokenService(
-    incomingRefreshToken
-  );
+  const { accessToken, newRefreshToken } =
+    await refreshAccessTokenService(incomingRefreshToken);
 
   const isProduction = process.env.NODE_ENV === "production";
 
@@ -279,3 +278,36 @@ export const verifyGoogleToken = async (req, res) => {
     });
   }
 };
+
+// GET usr ID
+export const getUserById = asyncHandler(async (req, res) => {
+  const userId = req.params.id;
+
+  const cacheKey = `user:${userId}`;
+
+  // Check cache first
+  const cachedUser = getCache(cacheKey);
+
+  if (cachedUser) {
+    console.log("Fetching user by ID from cache");
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, cachedUser, "User fetched successfully (cached)")
+      );
+  }
+
+  // Fetch from DB
+  const user = await User.findById(userId).select("-password"); // remove password if needed
+
+  if (!user) {
+    return res.status(404).json(new ApiResponse(404, null, "User not found"));
+  }
+
+  // Cache the result
+  setCache(cacheKey, user);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "User fetched successfully"));
+});

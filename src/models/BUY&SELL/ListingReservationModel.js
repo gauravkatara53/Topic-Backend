@@ -1,17 +1,17 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const reservationSchema = new mongoose.Schema(
   {
     listingId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Listing',
-      required: [true, 'Listing ID is required'],
+      ref: "Listing",
+      required: [true, "Listing ID is required"],
       index: true,
     },
     buyerId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: [true, 'Buyer ID is required'],
+      ref: "User",
+      required: [true, "Buyer ID is required"],
       index: true,
     },
     reservedAt: {
@@ -20,7 +20,7 @@ const reservationSchema = new mongoose.Schema(
     },
     expiresAt: {
       type: Date,
-      required: [true, 'Reservation expiry date is required'],
+      required: [true, "Reservation expiry date is required"],
     },
     isExpired: {
       type: Boolean,
@@ -49,7 +49,7 @@ const reservationSchema = new mongoose.Schema(
 );
 
 // Virtual to calculate active status on the fly
-reservationSchema.virtual('isActive').get(function () {
+reservationSchema.virtual("isActive").get(function () {
   return !this.isExpired && new Date() < this.expiresAt;
 });
 
@@ -57,4 +57,4 @@ reservationSchema.virtual('isActive').get(function () {
 reservationSchema.index({ expiresAt: 1 });
 reservationSchema.index({ isExpired: 1 });
 
-export default mongoose.model('ListingReservation', reservationSchema);
+export default mongoose.model("ListingReservation", reservationSchema);

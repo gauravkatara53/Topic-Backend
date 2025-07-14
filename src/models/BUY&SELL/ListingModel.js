@@ -48,6 +48,18 @@ const listingSchema = new mongoose.Schema(
         "cycles",
         "misc",
         "other",
+
+        // 🎓 College-student-specific additions
+        "laptops",
+        "mobiles",
+        "earphones_headphones",
+        "kitchen_appliances", // e.g., induction, kettle, etc.
+        "room_decor", // e.g., lights, posters
+        "gaming_items", // controllers, games
+        "project_components", // sensors, boards, tools
+        "lab_coats_aprons",
+        "college_uniforms", // uniforms, sports kits
+        "bags_backpacks",
       ],
       required: [true, "Category is required"],
     },
@@ -70,6 +82,10 @@ const listingSchema = new mongoose.Schema(
       ref: "User",
       required: [true, "Seller ID is required"],
       index: true,
+    },
+    buyerId: {
+      type: String,
+      default: null,
     },
 
     // Reservation

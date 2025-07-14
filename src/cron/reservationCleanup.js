@@ -2,7 +2,7 @@
 import cron from "node-cron";
 import ListingReservation from "../models/BUY&SELL/ListingReservationModel.js";
 import Listing from "../models/BUY&SELL/ListingModel.js";
-import { deleteCache } from "../utils/nodeCache.js";
+import { deleteCacheByPrefix } from "../utils/nodeCache.js";
 
 const expireReservations = async () => {
   const now = new Date();
@@ -31,7 +31,7 @@ const expireReservations = async () => {
     console.log(`[CRON] Reservation expired for listing ${listing._id}`);
   }
 
-  if (expiredReservations.length > 0) deleteCache("all_listings");
+  if (expiredReservations.length > 0) deleteCacheByPrefix("all_listings");
 };
 
 // Every 1 hour
