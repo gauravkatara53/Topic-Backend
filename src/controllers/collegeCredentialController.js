@@ -92,8 +92,7 @@ const HEADLESS = true; // Set to false for debugging with browser UI
 
 // fetch the attendance
 
-import puppeteer from "puppeteer-core";
-import chromium from "chrome-aws-lambda";
+import puppeteer from "puppeteer";
 
 export const fetchAttendance = asyncHandler(async (req, res) => {
   const user = req.user;
@@ -113,20 +112,13 @@ export const fetchAttendance = asyncHandler(async (req, res) => {
   }
 
   console.log("🔐 Starting Puppeteer");
-  const isProd = process.env.NODE_ENV === "production";
   console.log("🌍 NODE_ENV:", process.env.NODE_ENV);
 
   let browser;
   try {
     const launchOptions = {
-      args: isProd
-        ? chromium.args
-        : ["--no-sandbox", "--disable-setuid-sandbox"],
-      defaultViewport: chromium.defaultViewport,
-      executablePath: isProd
-        ? await chromium.executablePath
-        : "/usr/bin/google-chrome", // fallback for local
       headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
     };
 
     console.log("🚀 Launching browser with options:");
@@ -178,7 +170,7 @@ export const fetchAttendance = asyncHandler(async (req, res) => {
     );
 
     console.log("✅ Scraped rows:", tableData.length);
-    setCache(cacheKey, tableData, 6 * 60 * 60); // Cache 6 hours
+    setCache(cacheKey, tableData, 6 * 60 * 60); // 6 hours
 
     return sendResponse(res, 200, tableData, "Attendance fetched successfully");
   } catch (error) {
