@@ -114,10 +114,13 @@ export const fetchAttendance = asyncHandler(async (req, res) => {
 
   console.log("🔐 Starting Puppeteer");
   const isProduction = process.env.NODE_ENV === "production";
+
   const browser = await puppeteer.launch({
     args: isProduction ? chromium.args : ["--no-sandbox"],
     defaultViewport: chromium.defaultViewport,
-    executablePath: isProduction ? await chromium.executablePath : undefined, // let Puppeteer pick default locally
+    executablePath: isProduction
+      ? await chromium.executablePath
+      : (await import("puppeteer")).executablePath(),
     headless: true,
   });
 
