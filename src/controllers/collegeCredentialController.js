@@ -3,7 +3,9 @@ import User from "../models/userModel.js";
 import ApiError from "../utils/ApiError.js";
 import { sendResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
+import chromium from "chrome-aws-lambda";
+
 import { getCache, setCache } from "../utils/nodeCache.js"; // Adjust path if needed
 
 // export const fillCollegeCredential = asyncHandler(async (req, res) => {
@@ -111,9 +113,12 @@ export const fetchAttendance = asyncHandler(async (req, res) => {
   }
 
   console.log("🔐 Starting Puppeteer");
+  const isProduction = process.env.NODE_ENV === "production";
   const browser = await puppeteer.launch({
+    args: isProduction ? chromium.args : ["--no-sandbox"],
+    defaultViewport: chromium.defaultViewport,
+    executablePath: isProduction ? await chromium.executablePath : undefined, // let Puppeteer pick default locally
     headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
 
   try {
