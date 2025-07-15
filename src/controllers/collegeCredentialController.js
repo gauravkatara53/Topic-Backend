@@ -113,9 +113,10 @@ export const fetchAttendance = asyncHandler(async (req, res) => {
   }
 
   console.log("🔐 Starting Puppeteer");
-  console.log("🌍 NODE_ENV:", process.env.NODE_ENV);
   const isProd = process.env.NODE_ENV === "production";
+  console.log("🌍 NODE_ENV:", process.env.NODE_ENV);
 
+  let browser;
   try {
     const launchOptions = {
       args: isProd
@@ -124,13 +125,14 @@ export const fetchAttendance = asyncHandler(async (req, res) => {
       defaultViewport: chromium.defaultViewport,
       executablePath: isProd
         ? await chromium.executablePath
-        : (await import("puppeteer")).executablePath(),
+        : "/usr/bin/google-chrome", // fallback for local
       headless: true,
     };
 
-    console.log("🚀 Launching browser with options:", launchOptions);
+    console.log("🚀 Launching browser with options:");
+    console.dir(launchOptions, { depth: null });
 
-    const browser = await puppeteer.launch(launchOptions);
+    browser = await puppeteer.launch(launchOptions);
     const page = await browser.newPage();
 
     console.log("🌐 Navigating to Login.aspx");
@@ -175,10 +177,8 @@ export const fetchAttendance = asyncHandler(async (req, res) => {
       )
     );
 
-    await browser.close();
-
     console.log("✅ Scraped rows:", tableData.length);
-    setCache(cacheKey, tableData, 6 * 60 * 60); // 6 hrs
+    setCache(cacheKey, tableData, 6 * 60 * 60); // Cache 6 hours
 
     return sendResponse(res, 200, tableData, "Attendance fetched successfully");
   } catch (error) {
@@ -188,8 +188,12 @@ export const fetchAttendance = asyncHandler(async (req, res) => {
       500,
       null,
       "Failed to fetch attendance data",
-      error.message
+      error?.message || "Unexpected error"
     );
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
   }
 });
 
