@@ -111,7 +111,10 @@ export const fetchAttendance = asyncHandler(async (req, res) => {
   }
 
   console.log("🔐 Starting Puppeteer");
-  const browser = await puppeteer.launch({ headless: HEADLESS });
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  });
 
   try {
     const page = await browser.newPage();
