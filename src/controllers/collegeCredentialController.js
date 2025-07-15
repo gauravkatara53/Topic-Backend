@@ -113,6 +113,7 @@ export const fetchAttendance = asyncHandler(async (req, res) => {
   }
 
   console.log("🔐 Starting Puppeteer");
+  console.log("🌍 NODE_ENV:", process.env.NODE_ENV);
   const isProd = process.env.NODE_ENV === "production";
 
   try {
