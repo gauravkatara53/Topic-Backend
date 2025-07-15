@@ -88,8 +88,6 @@ export const fillCollegeCredential = asyncHandler(async (req, res) => {
   return sendResponse(res, 200, user, "College credentials added successfully");
 });
 
-const HEADLESS = true; // Set to false for debugging with browser UI
-
 // fetch the attendance
 
 import puppeteer from "puppeteer";
