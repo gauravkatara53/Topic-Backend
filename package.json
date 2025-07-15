@@ -37,7 +37,6 @@
   },
   "devDependencies": {
     "@types/puppeteer": "^5.4.7",
-    "nodemon": "^3.1.10",
-    "puppeteer": "^24.12.1"
+    "nodemon": "^3.1.10"
   }
 }
