@@ -3,8 +3,6 @@ import User from "../models/userModel.js";
 import ApiError from "../utils/ApiError.js";
 import { sendResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import puppeteer from "puppeteer-core";
-import chromium from "chrome-aws-lambda";
 
 import { getCache, setCache } from "../utils/nodeCache.js"; // Adjust path if needed
 
@@ -94,16 +92,18 @@ const HEADLESS = true; // Set to false for debugging with browser UI
 
 // fetch the attendance
 
+import puppeteer from "puppeteer-core";
+import chromium from "chrome-aws-lambda";
+
 export const fetchAttendance = asyncHandler(async (req, res) => {
   const user = req.user;
 
-  if (!user || !user.collegeId || !user.collegePassword) {
+  if (!user?.collegeId || !user?.collegePassword) {
+    console.log("⚠️ Missing credentials");
     throw new ApiError(401, "Unauthorized request: Missing credentials");
   }
 
   const { collegeId, collegePassword } = user;
-
-  // 🧠 Try to serve from cache
   const cacheKey = `attendance_${collegeId}`;
   const cachedData = getCache(cacheKey);
 
@@ -113,47 +113,49 @@ export const fetchAttendance = asyncHandler(async (req, res) => {
   }
 
   console.log("🔐 Starting Puppeteer");
-  const isProduction = process.env.NODE_ENV === "production";
-
-  const browser = await puppeteer.launch({
-    args: isProduction ? chromium.args : ["--no-sandbox"],
-    defaultViewport: chromium.defaultViewport,
-    executablePath: isProduction
-      ? await chromium.executablePath
-      : (await import("puppeteer")).executablePath(),
-    headless: true,
-  });
+  const isProd = process.env.NODE_ENV === "production";
 
   try {
+    const launchOptions = {
+      args: isProd
+        ? chromium.args
+        : ["--no-sandbox", "--disable-setuid-sandbox"],
+      defaultViewport: chromium.defaultViewport,
+      executablePath: isProd
+        ? await chromium.executablePath
+        : (await import("puppeteer")).executablePath(),
+      headless: true,
+    };
+
+    console.log("🚀 Launching browser with options:", launchOptions);
+
+    const browser = await puppeteer.launch(launchOptions);
     const page = await browser.newPage();
 
-    // Go to login page
     console.log("🌐 Navigating to Login.aspx");
     await page.goto("https://online.nitjsr.ac.in/endsem/Login.aspx", {
       waitUntil: "networkidle2",
     });
 
-    // Fill login
     console.log("✍️ Filling login form");
     await page.waitForSelector("#txtuser_id", { timeout: 10000 });
     await page.type("#txtuser_id", collegeId);
-
     await page.waitForSelector("#txtpassword", { timeout: 10000 });
     await page.type("#txtpassword", collegePassword);
 
+    console.log("🔐 Submitting login");
     await Promise.all([
       page.click("#btnsubmit"),
       page.waitForNavigation({ waitUntil: "networkidle2" }),
     ]);
 
-    // Check login
     const currentUrl = page.url();
+    console.log("🔍 Current URL after login:", currentUrl);
     if (currentUrl.includes("Login.aspx")) {
-      console.log("❌ Login failed");
+      console.log("❌ Login failed - staying on login page");
       throw new ApiError(401, "Invalid college credentials");
     }
 
-    // Navigate to attendance page
     console.log("📄 Navigating to attendance page");
     await page.goto(
       "https://online.nitjsr.ac.in/endsem/StudentAttendance/ClassAttendance.aspx",
@@ -163,7 +165,6 @@ export const fetchAttendance = asyncHandler(async (req, res) => {
     console.log("⏳ Waiting for attendance table");
     await page.waitForSelector("#ContentPlaceHolder1_gv", { timeout: 10000 });
 
-    // Scrape attendance
     console.log("🔍 Scraping table data");
     const tableData = await page.$$eval("#ContentPlaceHolder1_gv tr", (rows) =>
       rows.map((row) =>
@@ -175,15 +176,12 @@ export const fetchAttendance = asyncHandler(async (req, res) => {
 
     await browser.close();
 
-    console.log("✅ Scraped:", tableData.length, "rows");
-
-    // 🧠 Store in cache for 6 hours (21600 sec)
-    setCache(cacheKey, tableData, 6 * 60 * 60);
+    console.log("✅ Scraped rows:", tableData.length);
+    setCache(cacheKey, tableData, 6 * 60 * 60); // 6 hrs
 
     return sendResponse(res, 200, tableData, "Attendance fetched successfully");
   } catch (error) {
-    await browser.close();
-    console.error("❗ Attendance scraping failed:", error.message);
+    console.error("❗ Attendance scraping failed:", error);
     return sendResponse(
       res,
       500,
