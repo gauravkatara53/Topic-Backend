@@ -41,3 +41,48 @@ export const getTopNewsService = async () => {
 
   return news;
 };
+
+export const deleteNewsService = async (id) => {
+  const news = await NewModel.findById(id);
+
+  if (!news) {
+    throw new ApiError(404, "News not found");
+  }
+
+  await NewModel.findByIdAndDelete(id);
+
+  // Invalidate cache after deletion
+  deleteCache("top_10_news");
+};
+
+export const updateNewsService = async (id, updatedData) => {
+  const allowedFields = ["title", "content", "link"];
+  const updatePayload = {};
+
+  // Validate and filter allowed fields
+  for (const field of allowedFields) {
+    if (field in updatedData) {
+      updatePayload[field] = updatedData[field];
+    }
+  }
+
+  if (Object.keys(updatePayload).length === 0) {
+    throw new ApiError(
+      400,
+      "At least one valid field (title, content, link) must be provided"
+    );
+  }
+
+  const updatedNews = await NewModel.findByIdAndUpdate(id, updatePayload, {
+    new: true,
+  });
+
+  if (!updatedNews) {
+    throw new ApiError(404, "News not found");
+  }
+
+  // Invalidate cache after update
+  deleteCache("top_10_news");
+
+  return updatedNews;
+};
