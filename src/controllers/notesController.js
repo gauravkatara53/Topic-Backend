@@ -93,3 +93,53 @@ export const getNotes = asyncHandler(async (req, res) => {
 
   return sendResponse(res, 200, data, "Notes fetched successfully");
 });
+
+export const editNoteByAdmin = asyncHandler(async (req, res) => {
+  const noteId = req.params.noteId;
+  const adminId = req.user._id; // Ensure your auth middleware identifies admin users
+  const {
+    title,
+    description,
+    semester,
+    branch,
+    subject,
+    visibility,
+    isApproved,
+    rejectionReason,
+  } = req.body;
+
+  // Find the note
+  const note = await Notes.findById(noteId);
+  if (!note) {
+    throw new ApiError(404, "Note not found");
+  }
+
+  // Optional: You can check if req.user has admin role here
+  // if (!req.user.isAdmin) {
+  //   throw new ApiError(403, "Unauthorized: Admins only");
+  // }
+
+  // Update fields if provided
+  if (title !== undefined) note.title = title;
+  if (description !== undefined) note.description = description;
+  if (semester !== undefined) note.semester = semester;
+  if (branch !== undefined) note.branch = branch;
+  if (subject !== undefined) note.subject = subject;
+  if (visibility !== undefined) note.visibility = visibility;
+  if (isApproved !== undefined) note.isApproved = isApproved;
+  if (rejectionReason !== undefined) note.rejectionReason = rejectionReason;
+
+  // Track admin who changed note
+  note.changedBy = adminId;
+
+  await note.save();
+
+  // Clear cache (flush your notes cache so changes reflect)
+  flushCache();
+
+  return res.status(200).json({
+    status: "success",
+    data: note,
+    message: "Note updated by admin successfully",
+  });
+});

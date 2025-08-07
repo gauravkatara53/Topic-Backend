@@ -21,7 +21,7 @@ const noteSchema = new mongoose.Schema(
     downloadCount: { type: Number, default: 0 }, // ✅ Tracking popularity
     views: { type: Number, default: 0 }, // ✅ Optional: Engagement analytics
     isApproved: { type: Boolean, default: true },
-    approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" }, // ✅ If admin approval involved
+    changedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" }, // ✅ If admin approval involved
     rejectionReason: { type: String }, // ✅ Optional: track why rejected
     visibility: {
       type: String,

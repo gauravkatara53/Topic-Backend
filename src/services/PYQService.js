@@ -66,7 +66,7 @@ export const fetchPyq = async (query) => {
   if (sessionFrom) filter.sessionFrom = Number(sessionFrom);
   if (sessionTo) filter.sessionTo = Number(sessionTo);
 
-  const cacheKey = `notes-${JSON.stringify(query)}`;
+  const cacheKey = `pyq-${JSON.stringify(query)}`;
   const cachedData = getCache(cacheKey);
   if (cachedData) {
     return { cached: true, data: cachedData };
@@ -76,7 +76,7 @@ export const fetchPyq = async (query) => {
   const pageLimit = Math.max(Number(limit), 1);
   const skip = (currentPage - 1) * pageLimit;
 
-  const [notes, total] = await Promise.all([
+  const [pyqs, total] = await Promise.all([
     PYQ.find(filter).skip(skip).limit(pageLimit).sort({ createdAt: -1 }),
     PYQ.countDocuments(filter),
   ]);
@@ -84,10 +84,10 @@ export const fetchPyq = async (query) => {
   const totalPages = Math.ceil(total / pageLimit);
 
   const result = {
-    totalNotes: total,
+    totalPyqs: total,
     totalPages,
     currentPage,
-    notes,
+    pyqs,
   };
 
   setCache(cacheKey, result, 600); // Cache for 10 minutes
