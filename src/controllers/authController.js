@@ -314,7 +314,7 @@ export const getUserById = asyncHandler(async (req, res) => {
 
 // GET /admin/users?name=foo&email=bar&phone=123&page=1&limit=10
 export const getAllUsers = asyncHandler(async (req, res) => {
-  const { name, email, phone, page = 1, limit = 10 } = req.query;
+  const { name, email, phone } = req.query;
 
   // Build dynamic filter object for name, email, phone (case-insensitive partial match)
   const filters = {};
@@ -322,32 +322,23 @@ export const getAllUsers = asyncHandler(async (req, res) => {
   if (email) filters.email = { $regex: email, $options: "i" };
   if (phone) filters.phone = { $regex: phone, $options: "i" };
 
-  // Calculate skip for pagination
-  const skip = (parseInt(page) - 1) * parseInt(limit);
-
   // Query users from DB (excluding passwords)
-  const [total, users] = await Promise.all([
-    User.countDocuments(filters),
-    User.find(filters)
-      .select("-password -refreshToken")
-      .skip(skip)
-      .limit(parseInt(limit))
-      .sort({ createdAt: -1 }),
-  ]);
+  const users = await User.find(filters)
+    .select("-password -refreshToken")
+    .sort({ createdAt: -1 });
 
   return res.status(200).json(
     new ApiResponse(
       200,
       {
         users,
-        total,
-        page: parseInt(page),
-        pages: Math.ceil(total / limit),
+        total: users.length,
       },
       "Users fetched successfully"
     )
   );
 });
+
 // PUT /admin/users/:id
 export const updateUserById = asyncHandler(async (req, res) => {
   const userId = req.params.id;
