@@ -43,7 +43,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: GENDER_ENUM,
     },
-    isActive: { type: Boolean, default: false },
+    isActive: { type: Boolean, default: true },
     googleId: { type: String, unique: true, sparse: true }, // Allow some users without Google ID
     role: {
       type: String,

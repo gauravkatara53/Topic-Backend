@@ -311,3 +311,81 @@ export const getUserById = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, user, "User fetched successfully"));
 });
+
+// GET /admin/users?name=foo&email=bar&phone=123&page=1&limit=10
+export const getAllUsers = asyncHandler(async (req, res) => {
+  const { name, email, phone, page = 1, limit = 10 } = req.query;
+
+  // Build dynamic filter object for name, email, phone (case-insensitive partial match)
+  const filters = {};
+  if (name) filters.name = { $regex: name, $options: "i" };
+  if (email) filters.email = { $regex: email, $options: "i" };
+  if (phone) filters.phone = { $regex: phone, $options: "i" };
+
+  // Calculate skip for pagination
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+
+  // Query users from DB (excluding passwords)
+  const [total, users] = await Promise.all([
+    User.countDocuments(filters),
+    User.find(filters)
+      .select("-password -refreshToken")
+      .skip(skip)
+      .limit(parseInt(limit))
+      .sort({ createdAt: -1 }),
+  ]);
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        users,
+        total,
+        page: parseInt(page),
+        pages: Math.ceil(total / limit),
+      },
+      "Users fetched successfully"
+    )
+  );
+});
+// PUT /admin/users/:id
+export const updateUserById = asyncHandler(async (req, res) => {
+  const userId = req.params.id;
+  const updateFields = req.body;
+
+  // Prevent password or sensitive fields update here if you want
+  if ("password" in updateFields || "refreshToken" in updateFields) {
+    return res
+      .status(400)
+      .json(
+        new ApiResponse(
+          400,
+          null,
+          "Cannot update password or refresh token via this route."
+        )
+      );
+  }
+
+  // Validate if required fields need validation or handle in Mongoose schema
+  // Example: Trim string fields if needed
+  if (updateFields.name) updateFields.name = updateFields.name.trim();
+  if (updateFields.email)
+    updateFields.email = updateFields.email.trim().toLowerCase();
+
+  const user = await User.findByIdAndUpdate(userId, updateFields, {
+    new: true,
+    runValidators: true,
+    context: "query",
+    select: "-password -refreshToken",
+  });
+
+  if (!user) {
+    return res.status(404).json(new ApiResponse(404, null, "User not found"));
+  }
+
+  // Optionally invalidate cache here if you use caching for users
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "User updated successfully"));
+});

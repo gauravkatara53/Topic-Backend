@@ -96,3 +96,60 @@ export const getPyq = asyncHandler(async (req, res) => {
 
   return sendResponse(res, 200, data, "pyq fetched successfully");
 });
+
+export const editPYQByAdmin = asyncHandler(async (req, res) => {
+  const pyqId = req.params.pyqId;
+  const adminId = req.user._id;
+
+  const {
+    title,
+    description,
+    semester,
+    branch,
+    sessionFrom,
+    sessionTo,
+    subject,
+    visibility,
+    isApproved,
+    rejectionReason,
+    term,
+  } = req.body;
+
+  // Find the PYQ document
+  const pyq = await PYQ.findById(pyqId);
+  if (!pyq) {
+    throw new ApiError(404, "PYQ not found");
+  }
+
+  // Optional: Check if user is admin
+  // if (!req.user.isAdmin) {
+  //   throw new ApiError(403, "Unauthorized: Admins only");
+  // }
+
+  // Update only if properties provided
+  if (title !== undefined) pyq.title = title;
+  if (description !== undefined) pyq.description = description;
+  if (semester !== undefined) pyq.semester = semester;
+  if (branch !== undefined) pyq.branch = branch;
+  if (sessionFrom !== undefined) pyq.sessionFrom = sessionFrom;
+  if (sessionTo !== undefined) pyq.sessionTo = sessionTo;
+  if (subject !== undefined) pyq.subject = subject;
+  if (visibility !== undefined) pyq.visibility = visibility;
+  if (isApproved !== undefined) pyq.isApproved = isApproved;
+  if (rejectionReason !== undefined) pyq.rejectionReason = rejectionReason;
+  if (term !== undefined) pyq.term = term;
+
+  // Track admin who approved or changed the PYQ
+  pyq.approvedBy = adminId;
+
+  await pyq.save();
+
+  // Clear cache as needed
+  flushCache();
+
+  return res.status(200).json({
+    status: "success",
+    data: pyq,
+    message: "PYQ updated by admin successfully",
+  });
+});

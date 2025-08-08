@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  getAllUsers,
   getUser,
   getUserById,
   googleLoginSuccess,
@@ -10,11 +11,13 @@ import {
   saveToken,
   updateAccountDetailsController,
   updateUserAvatar,
+  updateUserById,
   verifyGoogleToken,
 } from "../controllers/authController.js";
 import { verifyJWT } from "../middlewares/authMiddleware.js";
 import { upload } from "../middlewares/multer.js";
 import passport from "passport";
+import { checkRoleAndVerification } from "../middlewares/checkuploader.js";
 
 const router = Router();
 
@@ -53,5 +56,19 @@ router.route("/save-token").post(saveToken);
 // routes/auth.js
 
 router.route("/google/verify").post(verifyGoogleToken);
+
+router.get(
+  "/admin/users",
+  verifyJWT,
+  checkRoleAndVerification(["admin"]),
+  getAllUsers
+);
+// Route to update a user by ID
+router.put(
+  "/admin/users/:id",
+  verifyJWT,
+  checkRoleAndVerification(["admin"]),
+  updateUserById
+);
 
 export default router;
